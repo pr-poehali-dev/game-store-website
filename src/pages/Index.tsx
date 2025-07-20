@@ -3,9 +3,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
+import AdminAuth from '@/components/AdminAuth';
+import AdminPanel from '@/components/AdminPanel';
 
 const Index = () => {
   const [cart, setCart] = useState([]);
+  const [showAdmin, setShowAdmin] = useState(false);
+  const [adminUser, setAdminUser] = useState<string | null>(null);
 
   const products = {
     robux: [
@@ -30,6 +34,23 @@ const Index = () => {
   const buyInstant = (product) => {
     alert(`🎉 Товар "${product.name}" автоматически доставлен на ваш аккаунт!`);
   };
+
+  const handleAdminLogin = (username: string) => {
+    setAdminUser(username);
+  };
+
+  const handleAdminLogout = () => {
+    setAdminUser(null);
+    setShowAdmin(false);
+  };
+
+  if (showAdmin && !adminUser) {
+    return <AdminAuth onLogin={handleAdminLogin} />;
+  }
+
+  if (showAdmin && adminUser) {
+    return <AdminPanel username={adminUser} onLogout={handleAdminLogout} />;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-roblox-blue via-roblox-red to-roblox-yellow font-rubik">
@@ -62,6 +83,15 @@ const Index = () => {
               <Button className="bg-roblox-blue hover:bg-roblox-blue/90">
                 <Icon name="User" size={16} className="mr-2" />
                 Войти
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setShowAdmin(true)}
+                className="hidden md:flex"
+              >
+                <Icon name="Shield" size={16} className="mr-2" />
+                Админ
               </Button>
             </div>
           </div>
