@@ -8,19 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
-
-interface Product {
-  id: number;
-  name: string;
-  price: number;
-  category: 'robux' | 'accounts' | 'items';
-  image: string;
-  description?: string;
-  original?: number;
-  discount?: number;
-  badges?: string[];
-  rarity?: string;
-}
+import { useProducts, type Product } from '@/hooks/useProducts';
 
 interface AdminPanelProps {
   username: string;
@@ -28,12 +16,7 @@ interface AdminPanelProps {
 }
 
 const AdminPanel: React.FC<AdminPanelProps> = ({ username, onLogout }) => {
-  const [products, setProducts] = useState<Product[]>([
-    { id: 1, name: '800 Робаксов', price: 299, category: 'robux', image: '💎', original: 399, discount: 25 },
-    { id: 2, name: '1700 Робаксов', price: 599, category: 'robux', image: '💎', original: 799, discount: 25 },
-    { id: 4, name: 'Премиум аккаунт 2022', price: 1299, category: 'accounts', image: '👤', badges: ['Премиум', 'Редкие вещи'] },
-    { id: 6, name: 'Dominus Empyreus', price: 5999, category: 'items', image: '🎩', rarity: 'Легендарный' },
-  ]);
+  const { products, addProduct, deleteProduct, addBulkProducts, resetToDefaults } = useProducts();
 
   const [newProduct, setNewProduct] = useState<Partial<Product>>({
     name: '',
@@ -47,20 +30,18 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ username, onLogout }) => {
 
   const handleAddProduct = () => {
     if (newProduct.name && newProduct.price) {
-      const product: Product = {
-        id: Date.now(),
+      const productData = {
         name: newProduct.name,
         price: newProduct.price,
         category: newProduct.category as 'robux' | 'accounts' | 'items',
         image: newProduct.image || '🎮',
         description: newProduct.description,
+        ...(newProduct.original && { original: newProduct.original }),
+        ...(newProduct.discount && { discount: newProduct.discount }),
+        ...(newProduct.rarity && { rarity: newProduct.rarity }),
       };
 
-      if (newProduct.original) product.original = newProduct.original;
-      if (newProduct.discount) product.discount = newProduct.discount;
-      if (newProduct.rarity) product.rarity = newProduct.rarity;
-
-      setProducts([...products, product]);
+      addProduct(productData);
       setNewProduct({ name: '', price: 0, category: 'robux', image: '', description: '' });
     }
   };
@@ -68,13 +49,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ username, onLogout }) => {
   const handleBulkUpload = () => {
     try {
       const lines = bulkUpload.split('\n').filter(line => line.trim());
-      const newProducts: Product[] = [];
+      const productsData: Array<Omit<Product, 'id'>> = [];
 
       lines.forEach(line => {
         const [name, price, category, image] = line.split(',').map(item => item.trim());
         if (name && price && category) {
-          newProducts.push({
-            id: Date.now() + Math.random(),
+          productsData.push({
             name,
             price: parseInt(price),
             category: category as 'robux' | 'accounts' | 'items',
@@ -83,7 +63,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ username, onLogout }) => {
         }
       });
 
-      setProducts([...products, ...newProducts]);
+      addBulkProducts(productsData);
       setBulkUpload('');
     } catch (error) {
       alert('Ошибка при загрузке товаров. Проверьте формат данных.');
@@ -91,7 +71,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ username, onLogout }) => {
   };
 
   const handleDeleteProduct = (id: number) => {
-    setProducts(products.filter(p => p.id !== id));
+    deleteProduct(id);
   };
 
   const getCategoryName = (category: string) => {
@@ -273,10 +253,16 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ username, onLogout }) => {
                   />
                 </div>
 
-                <Button onClick={handleAddProduct} className="w-full bg-roblox-blue hover:bg-roblox-blue/90">
-                  <Icon name="Plus" size={16} className="mr-2" />
-                  Добавить товар
-                </Button>
+                <div className="flex gap-2">
+                  <Button onClick={handleAddProduct} className="flex-1 bg-roblox-blue hover:bg-roblox-blue/90">
+                    <Icon name="Plus" size={16} className="mr-2" />
+                    Добавить товар
+                  </Button>
+                  <Button onClick={resetToDefaults} variant="outline" className="px-4">
+                    <Icon name="RotateCcw" size={16} className="mr-2" />
+                    Сброс
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

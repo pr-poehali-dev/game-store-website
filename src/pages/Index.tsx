@@ -5,27 +5,13 @@ import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
 import AdminAuth from '@/components/AdminAuth';
 import AdminPanel from '@/components/AdminPanel';
+import { useProducts } from '@/hooks/useProducts';
 
 const Index = () => {
   const [cart, setCart] = useState([]);
   const [showAdmin, setShowAdmin] = useState(false);
   const [adminUser, setAdminUser] = useState<string | null>(null);
-
-  const products = {
-    robux: [
-      { id: 1, name: '800 Робаксов', price: 299, original: 399, discount: 25, image: '💎' },
-      { id: 2, name: '1700 Робаксов', price: 599, original: 799, discount: 25, image: '💎' },
-      { id: 3, name: '4500 Робаксов', price: 1499, original: 1999, discount: 25, image: '💎' },
-    ],
-    accounts: [
-      { id: 4, name: 'Премиум аккаунт 2022', price: 1299, badges: ['Премиум', 'Редкие вещи'], image: '👤' },
-      { id: 5, name: 'Старый аккаунт 2018', price: 2499, badges: ['Раритет', 'Лимитки'], image: '👤' },
-    ],
-    items: [
-      { id: 6, name: 'Dominus Empyreus', price: 5999, rarity: 'Легендарный', image: '🎩' },
-      { id: 7, name: 'Valkyrie Helm', price: 3499, rarity: 'Эпический', image: '⚔️' },
-    ]
-  };
+  const { getProductsByCategory } = useProducts();
 
   const addToCart = (product) => {
     setCart([...cart, product]);
@@ -166,7 +152,7 @@ const Index = () => {
             💎 Робаксы
           </h3>
           <div className="grid md:grid-cols-3 gap-6">
-            {products.robux.map((product) => (
+            {getProductsByCategory('robux').map((product) => (
               <Card key={product.id} className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
                 {product.discount && (
                   <Badge className="absolute top-4 right-4 bg-roblox-red text-white">
@@ -215,7 +201,7 @@ const Index = () => {
             👤 Аккаунты
           </h3>
           <div className="grid md:grid-cols-2 gap-6">
-            {products.accounts.map((product) => (
+            {getProductsByCategory('accounts').map((product) => (
               <Card key={product.id} className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
                 <CardHeader>
                   <div className="flex items-center space-x-4">
@@ -265,7 +251,7 @@ const Index = () => {
             ⚔️ Предметы
           </h3>
           <div className="grid md:grid-cols-2 gap-6">
-            {products.items.map((product) => (
+            {getProductsByCategory('items').map((product) => (
               <Card key={product.id} className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
                 <CardHeader>
                   <div className="flex items-center space-x-4">
