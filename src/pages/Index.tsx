@@ -5,20 +5,60 @@ import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
 import AdminAuth from '@/components/AdminAuth';
 import AdminPanel from '@/components/AdminPanel';
-import { useProducts } from '@/hooks/useProducts';
+import CartModal from '@/components/CartModal';
+import NotificationToast from '@/components/NotificationToast';
+import { useProducts, type Product } from '@/hooks/useProducts';
 
 const Index = () => {
-  const [cart, setCart] = useState([]);
+  const [cart, setCart] = useState<Product[]>([]);
   const [showAdmin, setShowAdmin] = useState(false);
   const [adminUser, setAdminUser] = useState<string | null>(null);
+  const [showCart, setShowCart] = useState(false);
+  const [notifications, setNotifications] = useState<Array<{id: number, message: string, type: 'success' | 'info'}>>([]);
   const { getProductsByCategory } = useProducts();
 
-  const addToCart = (product) => {
-    setCart([...cart, product]);
+  const addNotification = (message: string, type: 'success' | 'info' = 'success') => {
+    const id = Date.now();
+    setNotifications(prev => [...prev, { id, message, type }]);
   };
 
-  const buyInstant = (product) => {
-    alert(`🎉 Товар "${product.name}" автоматически доставлен на ваш аккаунт!`);
+  const removeNotification = (id: number) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
+
+  const addToCart = (product: Product) => {
+    setCart([...cart, product]);
+    addNotification(`Товар "${product.name}" добавлен в корзину! 🛒`);
+  };
+
+  const removeFromCart = (id: number) => {
+    setCart(prev => prev.filter(item => item.id !== id));
+  };
+
+  const clearCart = () => {
+    setCart([]);
+  };
+
+  const buyInstant = (product: Product) => {
+    const chatUrl = `https://t.me/robloxshop_support?text=Хочу купить: ${product.name} за ${product.price}₽`;
+    addNotification(`🎉 Переходим в чат для покупки "${product.name}"!`, 'info');
+    
+    setTimeout(() => {
+      window.open(chatUrl, '_blank');
+    }, 1500);
+  };
+
+  const handleCartPurchase = (items: Product[]) => {
+    const totalPrice = items.reduce((sum, item) => sum + item.price, 0);
+    const itemsList = items.map(item => `${item.name} (${item.price}₽)`).join(', ');
+    const chatUrl = `https://t.me/robloxshop_support?text=Хочу купить из корзины: ${itemsList}. Итого: ${totalPrice}₽`;
+    
+    addNotification(`🎉 Заказ оформлен! Переходим в чат с продавцом...`, 'success');
+    clearCart();
+    
+    setTimeout(() => {
+      window.open(chatUrl, '_blank');
+    }, 2000);
   };
 
   const handleAdminLogin = (username: string) => {
@@ -58,7 +98,12 @@ const Index = () => {
               <a href="#items" className="hover:text-roblox-blue transition-colors">Предметы</a>
             </nav>
             <div className="flex items-center space-x-3">
-              <Button variant="outline" size="sm" className="relative">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="relative"
+                onClick={() => setShowCart(true)}
+              >
                 <Icon name="ShoppingCart" size={16} />
                 {cart.length > 0 && (
                   <Badge className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-roblox-red text-white text-xs flex items-center justify-center">
@@ -331,6 +376,26 @@ const Index = () => {
           </div>
         </div>
       </footer>
+
+      {/* Cart Modal */}
+      <CartModal
+        open={showCart}
+        onOpenChange={setShowCart}
+        cart={cart}
+        onRemoveItem={removeFromCart}
+        onClearCart={clearCart}
+        onPurchase={handleCartPurchase}
+      />
+
+      {/* Notifications */}
+      {notifications.map((notification) => (
+        <NotificationToast
+          key={notification.id}
+          message={notification.message}
+          type={notification.type}
+          onClose={() => removeNotification(notification.id)}
+        />
+      ))}
     </div>
   );
 };
